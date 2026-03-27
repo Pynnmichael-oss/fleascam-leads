@@ -522,18 +522,74 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ── RESPONSIVE ── */
+  /* ── HAMBURGER ── */
+  .hamburger {
+    display: none;
+    align-items: center; justify-content: center;
+    width: 36px; height: 36px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: none; cursor: pointer;
+    font-size: 20px; color: var(--ink-muted);
+    flex-shrink: 0;
+    transition: all .15s;
+  }
+  .hamburger:hover { background: var(--bg); color: var(--ink); }
+
+  .sidebar-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 99;
+  }
+  .sidebar-overlay.open { display: block; }
+
+  /* ── RESPONSIVE — tablet ── */
   @media (max-width: 900px) {
-    .sidebar { width: 0; overflow: hidden; }
+    .sidebar {
+      transform: translateX(-228px);
+      transition: transform .25s ease;
+    }
+    .sidebar.open { transform: translateX(0); }
     .main { margin-left: 0; }
     .kpi-strip { grid-template-columns: repeat(3, 1fr); }
+    .hamburger { display: flex; }
+    .topbar { padding: 0 20px; gap: 10px; }
+    .content { padding: 20px; }
+    #cards-view { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+  }
+
+  /* ── RESPONSIVE — phone ── */
+  @media (max-width: 600px) {
+    .topbar { padding: 0 14px; gap: 8px; }
+    .topbar h1 { font-size: 16px; }
+    .search-wrap { display: none; }
+    .filter-bar { display: none; }
+    .content { padding: 14px 12px; }
+    .kpi-strip { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+    .kpi-card { padding: 14px 16px; }
+    .kpi-value { font-size: 26px; }
+    .kpi-sub { display: none; }
+    #cards-view { grid-template-columns: 1fr; gap: 12px; }
+    .card-header { padding: 14px 14px 10px; }
+    .card-body { padding: 12px 14px; }
+    .card-footer { padding: 8px 14px 12px; }
+    .modal-overlay { align-items: flex-end; padding: 0; }
+    .modal { border-radius: 16px 16px 0 0; max-height: 92vh; }
+    .modal-header { padding: 18px 18px 14px; }
+    .modal-body { padding: 16px 18px; }
+    .modal-footer { padding: 12px 18px; flex-wrap: wrap; gap: 8px; }
+    .modal-grid { grid-template-columns: 1fr; gap: 14px; }
+    .modal-field.full { grid-column: 1; }
   }
 </style>
 </head>
 <body>
 
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
 <!-- SIDEBAR -->
-<nav class="sidebar">
+<nav class="sidebar" id="sidebar">
   <div class="sidebar-logo">
     <div class="wordmark">Flea<span>Scan</span></div>
     <div class="tagline">Deal Pipeline</div>
@@ -588,6 +644,7 @@
 <!-- MAIN -->
 <div class="main">
   <div class="topbar">
+    <button class="hamburger" onclick="toggleSidebar()">☰</button>
     <h1>Lead <em>Pipeline</em></h1>
     <div class="search-wrap">
       <input type="text" id="search-input" placeholder="Search markets, cities…" oninput="applyFilters()">
@@ -700,6 +757,10 @@
           <div class="mf-label">Owner</div>
           <div class="mf-value" id="m-owner"></div>
         </div>
+        <div class="modal-field">
+          <div class="mf-label">📞 Contact</div>
+          <div class="mf-value" id="m-contact"></div>
+        </div>
         <div class="modal-field full">
           <div class="mf-label">🚨 Distress Evidence</div>
           <div class="mf-value distress" id="m-distress"></div>
@@ -732,6 +793,11 @@
     </div>
     <div class="modal-footer">
       <div class="mf-date" id="m-date"></div>
+      <a id="m-tg-link" href="https://t.me/KingJulian15_bot" target="_blank" rel="noopener"
+         style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:#2563eb;color:#fff;border-radius:7px;font-size:12px;font-weight:600;text-decoration:none;">
+        💬 Edit via Telegram
+      </a>
+      <div id="m-tg-hint" style="font-size:11px;color:var(--ink-muted);width:100%;margin-top:2px;"></div>
     </div>
   </div>
 </div>
@@ -874,6 +940,10 @@ function renderCards() {
           <div class="field-label">RE Upside</div>
           <div class="field-value">${truncate(l.Real_Estate_Upside, 90)}</div>
         </div>
+        ${l.Contact_Info ? `<div class="card-field">
+          <div class="field-label">📞 Contact</div>
+          <div class="field-value">${l.Contact_Info}</div>
+        </div>` : ''}
       </div>
       <div class="card-footer">
         ${badgeHTML(l.Status)}
@@ -917,6 +987,7 @@ function openModal(id) {
   document.getElementById('m-size').textContent     = l.Size_Booths_Acres || '—';
   document.getElementById('m-format').textContent   = l.Indoor_Outdoor || '—';
   document.getElementById('m-owner').textContent    = l.Owner_Name_If_Known || '—';
+  document.getElementById('m-contact').textContent  = l.Contact_Info || 'Not publicly available';
   document.getElementById('m-distress').textContent = l.Distress_Evidence || '—';
   document.getElementById('m-upside').textContent   = l.Real_Estate_Upside || '—';
   document.getElementById('m-hispanic').textContent = l.Hispanic_Population_Context || '—';
@@ -924,6 +995,8 @@ function openModal(id) {
   document.getElementById('m-source').textContent   = l.Source || '—';
   document.getElementById('m-notes').textContent    = l.Notes || '—';
   document.getElementById('m-date').textContent     = 'Scanned: ' + (l.Scan_Date || '—');
+  document.getElementById('m-tg-hint').textContent =
+    `Commands: /s ${l.Lead_ID} Active · /n ${l.Lead_ID} <note> · /c ${l.Lead_ID} <contact>`;
 
   // links
   const linksEl = document.getElementById('m-links');
@@ -946,6 +1019,12 @@ function closeModalDirect() {
   document.body.style.overflow = '';
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModalDirect(); });
+
+// ── Sidebar toggle (mobile) ───────────────────────────────────────────────────
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function truncate(str, n) {
