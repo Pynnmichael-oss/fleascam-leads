@@ -793,11 +793,6 @@
     </div>
     <div class="modal-footer">
       <div class="mf-date" id="m-date"></div>
-      <a id="m-tg-link" href="https://t.me/KingJulian15_bot" target="_blank" rel="noopener"
-         style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:#2563eb;color:#fff;border-radius:7px;font-size:12px;font-weight:600;text-decoration:none;">
-        💬 Edit via Telegram
-      </a>
-      <div id="m-tg-hint" style="font-size:11px;color:var(--ink-muted);width:100%;margin-top:2px;"></div>
     </div>
   </div>
 </div>
@@ -995,8 +990,6 @@ function openModal(id) {
   document.getElementById('m-source').textContent   = l.Source || '—';
   document.getElementById('m-notes').textContent    = l.Notes || '—';
   document.getElementById('m-date').textContent     = 'Scanned: ' + (l.Scan_Date || '—');
-  document.getElementById('m-tg-hint').textContent =
-    `Commands: /s ${l.Lead_ID} Active · /n ${l.Lead_ID} <note> · /c ${l.Lead_ID} <contact>`;
 
   // links
   const linksEl = document.getElementById('m-links');
